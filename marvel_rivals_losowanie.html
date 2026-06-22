@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Marvel Rivals — Losowanie Postaci</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --card: #1a1a26;
+    --border: #2a2a40;
+    --accent: #e8c84a;
+    --accent2: #c0392b;
+    --text: #e8e8f0;
+    --muted: #7070a0;
+    --vanguard: #4a8fe8;
+    --duelist: #e84a4a;
+    --strategist: #4ae88a;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* background grid pattern */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(232,200,74,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(232,200,74,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  .logo-line {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .logo-bar {
+    height: 2px;
+    width: 60px;
+    background: var(--accent);
+  }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2.5rem, 8vw, 5rem);
+    letter-spacing: 0.08em;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  h1 span {
+    color: var(--accent);
+  }
+
+  .subtitle {
+    font-size: 0.85rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 0.5rem;
+  }
+
+  /* filter buttons */
+  .filters {
+    display: flex;
+    justify-content: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 2.5rem;
+  }
+
+  .filter-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 0.45rem 1.2rem;
+    font-family: 'Barlow', sans-serif;
+    font-size: 0.8rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-radius: 2px;
+  }
+
+  .filter-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .filter-btn.active-all { border-color: var(--accent); color: var(--accent); background: rgba(232,200,74,0.08); }
+  .filter-btn.active-vanguard { border-color: var(--vanguard); color: var(--vanguard); background: rgba(74,143,232,0.08); }
+  .filter-btn.active-duelist { border-color: var(--duelist); color: var(--duelist); background: rgba(232,74,74,0.08); }
+  .filter-btn.active-strategist { border-color: var(--strategist); color: var(--strategist); background: rgba(74,232,138,0.08); }
+
+  /* main card area */
+  .card-area {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2rem;
+  }
+
+  .hero-card {
+    width: 340px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+    transition: opacity 0.3s;
+  }
+
+  .card-top {
+    height: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    background: var(--surface);
+  }
+
+  .card-top::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(232,200,74,0.07) 0%, transparent 70%);
+  }
+
+  .hero-icon-big {
+    font-size: 7rem;
+    line-height: 1;
+    position: relative;
+    z-index: 1;
+    filter: drop-shadow(0 0 20px rgba(232,200,74,0.2));
+    transition: all 0.4s;
+  }
+
+  .question-mark {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 8rem;
+    color: var(--border);
+    position: relative;
+    z-index: 1;
+  }
+
+  .role-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 0.3rem 0.75rem;
+    border-radius: 2px;
+    font-weight: 600;
+  }
+
+  .role-Vanguard { background: rgba(74,143,232,0.15); color: var(--vanguard); border: 1px solid rgba(74,143,232,0.3); }
+  .role-Duelist  { background: rgba(232,74,74,0.15);  color: var(--duelist);  border: 1px solid rgba(232,74,74,0.3); }
+  .role-Strategist { background: rgba(74,232,138,0.15); color: var(--strategist); border: 1px solid rgba(74,232,138,0.3); }
+
+  .card-body {
+    padding: 1.5rem;
+    text-align: center;
+    border-top: 1px solid var(--border);
+  }
+
+  .hero-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    letter-spacing: 0.05em;
+    color: var(--text);
+    line-height: 1;
+    margin-bottom: 0.4rem;
+    min-height: 2rem;
+  }
+
+  .hero-desc {
+    font-size: 0.82rem;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    min-height: 1rem;
+  }
+
+  /* spin animation */
+  @keyframes spin-reveal {
+    0%   { opacity: 0; transform: scale(0.7) rotate(-10deg); }
+    60%  { opacity: 1; transform: scale(1.08) rotate(3deg); }
+    100% { opacity: 1; transform: scale(1) rotate(0deg); }
+  }
+
+  .revealed .hero-icon-big {
+    animation: spin-reveal 0.5s cubic-bezier(0.23,1,0.32,1) both;
+  }
+
+  @keyframes slot-name {
+    0%   { opacity: 0; transform: translateY(8px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  .revealed .hero-name,
+  .revealed .hero-desc {
+    animation: slot-name 0.35s 0.3s ease both;
+  }
+
+  /* roll button */
+  .roll-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 3rem;
+  }
+
+  .roll-btn {
+    background: var(--accent);
+    color: #0a0a0f;
+    border: none;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: 0.15em;
+    padding: 0.9rem 3.5rem;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .roll-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.15);
+    transform: translateX(-100%);
+    transition: transform 0.3s;
+  }
+
+  .roll-btn:hover::before { transform: translateX(0); }
+  .roll-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(232,200,74,0.25); }
+  .roll-btn:active { transform: translateY(0) scale(0.98); }
+  .roll-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .roll-count {
+    font-size: 0.75rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+
+  /* history */
+  .history-section {
+    margin-top: 1rem;
+  }
+
+  .history-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1rem;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .history-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .history-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .history-tag {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 0.3rem 0.8rem;
+    font-size: 0.78rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: border-color 0.2s;
+  }
+
+  .history-tag:hover { border-color: var(--accent); color: var(--text); }
+
+  .history-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .dot-Vanguard   { background: var(--vanguard); }
+  .dot-Duelist    { background: var(--duelist); }
+  .dot-Strategist { background: var(--strategist); }
+
+  .clear-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'Barlow', sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.3rem 0.8rem;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.2s;
+    margin-left: auto;
+    display: block;
+    margin-top: 0.75rem;
+  }
+
+  .clear-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+
+  .no-chars {
+    text-align: center;
+    color: var(--muted);
+    padding: 2rem;
+    font-size: 0.9rem;
+    letter-spacing: 0.1em;
+  }
+  .roster-section { margin-top: 2rem; }
+.roster-title {
+  text-align: center;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.5rem;
+  letter-spacing: 0.3em;
+  color: var(--accent);
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.roster-title::before,
+.roster-title::after{
+  content: '';
+  flex: 1;
+  height: 2px;
+  background: var(--accent);
+}
+.roster-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem;
+}
+.roster-role {
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+  text-align: center;
+}
+.vanguard-label  { color: var(--vanguard); }
+.duelist-label   { color: var(--duelist); }
+.strategist-label{ color: var(--strategist); }
+.roster-item {
+  font-size: 0.82rem;
+  color: var(--muted);
+  padding: 0.3rem 0;
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="logo-line">
+      <div class="logo-bar"></div>
+      <div class="subtitle">Marvel Rivals</div>
+      <div class="logo-bar"></div>
+    </div>
+    <h1>Losuj <span>Postać</span></h1>
+    <p class="subtitle">50 bohaterów &bull; Sezon 8</p>
+  </header>
+
+  <div class="filters">
+    <button class="filter-btn active-all" data-role="all" onclick="setFilter(this,'all')">Wszyscy</button>
+    <button class="filter-btn" data-role="Vanguard" onclick="setFilter(this,'Vanguard')">🛡 Vanguard</button>
+    <button class="filter-btn" data-role="Duelist" onclick="setFilter(this,'Duelist')">⚔ Duelist</button>
+    <button class="filter-btn" data-role="Strategist" onclick="setFilter(this,'Strategist')">💚 Strategist</button>
+  </div>
+
+  <div class="card-area">
+    <div class="hero-card" id="heroCard">
+      <div class="card-top">
+        <div class="question-mark" id="heroIcon">?</div>
+      </div>
+      <div class="card-body">
+        <div class="hero-name" id="heroName">Naciśnij losuj</div>
+        <div class="hero-desc" id="heroDesc">Wybierz rolę lub losuj wszystkich</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="roll-area">
+    <button class="roll-btn" id="rollBtn" onclick="roll()">⚡ Losuj Postać</button>
+    <div class="roll-count" id="rollCount"></div>
+  </div>
+
+  <div class="history-section" id="historySection" style="display:none">
+    <div class="history-title">Historia losowań</div>
+    <div class="history-list" id="historyList"></div>
+    <button class="clear-btn" onclick="clearHistory()">Wyczyść historię</button>
+  </div>
+  
+  <div class="roster-section">
+  <div class="roster-title">Lista Postaci</div>
+  <div class="roster-grid">
+    <div class="roster-col">
+      <div class="roster-role vanguard-label">Vanguard</div>
+      <div id="listVanguard"></div>
+    </div>
+    <div class="roster-col">
+      <div class="roster-role duelist-label">Duelist</div>
+      <div id="listDuelist"></div>
+    </div>
+    <div class="roster-col">
+      <div class="roster-role strategist-label">Strategist</div>
+      <div id="listStrategist"></div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+const heroes = [
+  {name:"Adam Warlock",   role:"Strategist",  icon:"🪐"},
+  {name:"Angela",         role:"Vanguard",    icon:"⚔️"},
+  {name:"Black Cat",      role:"Duelist",     icon:"🐱"},
+  {name:"Black Panther",  role:"Duelist",     icon:"🐾"},
+  {name:"Black Widow",    role:"Duelist",     icon:"🕷️"},
+  {name:"Blade",          role:"Duelist",     icon:"🧛"},
+  {name:"Captain America",role:"Vanguard",    icon:"🛡️"},
+  {name:"Cloak & Dagger", role:"Strategist",  icon:"🌑"},
+  {name:"Daredevil",      role:"Duelist",     icon:"🥊"},
+  {name:"DPSpool",        role:"Duelist",     icon:"🗡️"},
+  {name:"TANKpool",       role:"Vanguard",     icon:"🗡️"},
+  {name:"HEALpool",       role:"Strategist",     icon:"🗡️"},
+  {name:"Devil Dinosaur", role:"Vanguard",    icon:"🦕"},
+  {name:"Doctor Strange", role:"Vanguard",    icon:"🔮"},
+  {name:"Elsa Bloodstone",role:"Duelist",     icon:"💎"},
+  {name:"Emma Frost",     role:"Vanguard",     icon:"💎"},
+  {name:"Gambit",         role:"Strategist",     icon:"🃏"},
+  {name:"Groot",          role:"Vanguard",    icon:"🌿"},
+  {name:"Hawkeye",        role:"Duelist",     icon:"🏹"},
+  {name:"Hela",           role:"Duelist",     icon:"💀"},
+  {name:"Hulk",           role:"Vanguard",    icon:"💚"},
+  {name:"Human Torch",    role:"Duelist",     icon:"🔥"},
+  {name:"Invisible Woman",role:"Strategist",  icon:"👁️"},
+  {name:"Iron Fist",      role:"Duelist",     icon:"👊"},
+  {name:"Iron Man",       role:"Duelist",     icon:"🤖"},
+  {name:"Jeff the Land Shark", role:"Strategist", icon:"🦈"},
+  {name:"Loki",           role:"Strategist",  icon:"🐍"},
+  {name:"Luna Snow",      role:"Strategist",  icon:"❄️"},
+  {name:"Magik",          role:"Duelist",     icon:"⚡"},
+  {name:"Magneto",        role:"Vanguard",    icon:"🧲"},
+  {name:"Mantis",         role:"Strategist",  icon:"🌸"},
+  {name:"Mister Fantastic",role:"Duelist",   icon:"🤸"},
+  {name:"Moon Knight",    role:"Duelist",     icon:"🌙"},
+  {name:"Namor",          role:"Duelist",     icon:"🌊"},
+  {name:"Peni Parker",    role:"Vanguard",    icon:"🕷️"},
+  {name:"Phoenix",        role:"Duelist",     icon:"🦅"},
+  {name:"Psylocke",       role:"Duelist",     icon:"🔮"},
+  {name:"Punisher",       role:"Duelist",     icon:"💀"},
+  {name:"Rocket Raccoon", role:"Strategist",  icon:"🦝"},
+  {name:"Rogue",          role:"Vanguard",     icon:"✈️"},
+  {name:"Scarlet Witch",  role:"Duelist",     icon:"🌀"},
+  {name:"Spider-Man",     role:"Duelist",     icon:"🕸️"},
+  {name:"Squirrel Girl",  role:"Duelist",     icon:"🐿️"},
+  {name:"Star-Lord",      role:"Duelist",     icon:"🚀"},
+  {name:"Storm",          role:"Duelist",     icon:"⛈️"},
+  {name:"The Thing",      role:"Vanguard",    icon:"🪨"},
+  {name:"Thor",           role:"Vanguard",    icon:"⚡"},
+  {name:"Ultron",         role:"Strategist",     icon:"🤖"},
+  {name:"Venom",          role:"Vanguard",    icon:"🖤"},
+  {name:"White Fox",      role:"Strategist",  icon:"🦊"},
+  {name:"Winter Soldier", role:"Duelist",     icon:"🦾"},
+  {name:"Wolverine",      role:"Duelist",     icon:"🐺"},
+  {name:"Cyclops",       role:"Duelist",      icon:"😎"},
+];
+
+let currentFilter = 'all';
+let rollTotal = 0;
+let history = [];
+let last = null;
+
+function setFilter(btn, role) {
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    b.className = 'filter-btn';
+  });
+  if (role === 'all') btn.classList.add('active-all');
+  else if (role === 'Vanguard') btn.classList.add('active-vanguard');
+  else if (role === 'Duelist') btn.classList.add('active-duelist');
+  else if (role === 'Strategist') btn.classList.add('active-strategist');
+  currentFilter = role;
+}
+
+function roll() {
+  const pool = currentFilter === 'all' ? heroes : heroes.filter(h => h.role === currentFilter);
+  if (!pool.length) return;
+
+  const btn = document.getElementById('rollBtn');
+  btn.disabled = true;
+
+  let available = pool.filter(h => h !== last);
+  if (!available.length) available = pool;
+  const hero = available[Math.floor(Math.random() * available.length)];
+  last = hero;
+
+  let ticks = 0;
+  const totalTicks = 14;
+  const interval = setInterval(() => {
+    const fake = pool[Math.floor(Math.random() * pool.length)];
+    document.getElementById('heroIcon').textContent = fake.icon;
+    document.getElementById('heroName').textContent = fake.name;
+    ticks++;
+    if (ticks >= totalTicks) {
+      clearInterval(interval);
+      showHero(hero);
+      btn.disabled = false;
+    }
+  }, 60);
+
+  rollTotal++;
+  document.getElementById('rollCount').textContent = `Łączna liczba losowań: ${rollTotal}`;
+}
+
+function showHero(hero) {
+  const card = document.getElementById('heroCard');
+  const iconEl = document.getElementById('heroIcon');
+  const nameEl = document.getElementById('heroName');
+  const descEl = document.getElementById('heroDesc');
+
+  card.classList.remove('revealed');
+  void card.offsetWidth;
+
+  iconEl.className = 'hero-icon-big';
+  iconEl.textContent = hero.icon;
+
+  const oldBadge = card.querySelector('.role-badge');
+  if (oldBadge) oldBadge.remove();
+
+  const badge = document.createElement('div');
+  badge.className = `role-badge role-${hero.role}`;
+  badge.textContent = hero.role;
+  card.querySelector('.card-top').appendChild(badge);
+
+  nameEl.textContent = hero.name;
+  descEl.textContent = roleDesc(hero.role);
+
+  card.classList.add('revealed');
+
+  history.unshift(hero);
+  if (history.length > 20) history.pop();
+  renderHistory();
+}
+
+function roleDesc(role) {
+  if (role === 'Vanguard') return 'Tank · Linia frontu · Absorpcja obrażeń';
+  if (role === 'Duelist') return 'DPS · Zadawanie obrażeń · Eliminacja wrogów';
+  return 'Support · Leczenie · Wsparcie drużyny';
+}
+
+function renderHistory() {
+  const sec = document.getElementById('historySection');
+  const list = document.getElementById('historyList');
+  if (!history.length) { sec.style.display = 'none'; return; }
+  sec.style.display = 'block';
+  list.innerHTML = history.map(h =>
+    `<div class="history-tag">
+      <div class="history-dot dot-${h.role}"></div>
+      ${h.icon} ${h.name}
+    </div>`
+  ).join('');
+}
+
+
+function clearHistory() {
+  history = [];
+  renderHistory();
+}
+function renderRoster() {
+  ['Vanguard','Duelist','Strategist'].forEach(role => {
+    const el = document.getElementById('list' + role);
+    el.innerHTML = heroes
+      .filter(h => h.role === role)
+      .map(h => `<div class="roster-item">${h.icon} ${h.name}</div>`)
+      .join('');
+  });
+}
+renderRoster();
+
+
+</script>
+</body>
+</html>
